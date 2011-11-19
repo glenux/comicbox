@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+where = Dir.pwd
+
+ARGV.each do |arg|
+	Dir.chdir where
+
+	cbr_path = File.expand_path arg
+	cbz_path = cbr_path.gsub(/.cbr$/,'.cbz')
+
+	name = File.basename(arg).dup
+	name.gsub!(/\.cbr/i,'')
+	FileUtils.mkdir_p name
+	Dir.chdir name
+	system "unrar e \"#{cbr_path}\""
+	Dir.chdir where
+	system "zip -r \"#{cbz_path}\" \"#{name}\""
+	FileUtils.rm_rf name
+end
+
