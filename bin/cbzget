@@ -1,0 +1,106 @@
+#!/usr/bin/env ruby
+
+require 'pp'
+require 'yaml'
+
+require 'rubygems'
+require 'bundler/setup'
+require 'nokogiri'
+require 'open-uri'
+
+config_path = ARGV.shift
+config_fh = File.open config_path
+config_yml = YAML.load config_fh
+pp config_yml
+
+class Page
+	attr_reader :url
+
+
+	def initialize url, config
+		puts "page %s" % url
+		@url = url
+		@config = config
+		@prev = nil
+		@next = nil
+		@first = nil
+		@last = nil
+
+		@doc = Nokogiri::HTML(open(url))
+	end
+
+	def first
+		return @first unless @first.nil?
+		first_url = @doc.xpath @config['first_xpath']
+		#puts "first %s" % first_url.text
+		url = _make_url @url, first_url.text
+		@first = Page.new url, @config
+		return @first
+	end
+
+	def last
+		return @last unless @last.nil?
+		last_url = @doc.xpath @config['last_xpath']
+		#puts "last %s" % last_url.text
+		url = _make_url @url, last_url.text
+		@last = Page.new url, @config
+		return @last
+	end
+
+	def next
+		return @next unless @next.nil?
+		next_url = @doc.xpath @config['next_xpath']
+		#puts "next %s" % next_url.text
+		url = _make_url @url, next_url.text
+		@next = Page.new url, @config
+		return @next
+	end
+
+	def prev
+		return @prev unless @prev.nil?
+		prev_url = @doc.xpath @config['prev_xpath']
+		#puts "prev %s" % prev_url.text
+		url = _make_url @url, prev_url.text
+		@prev = Page.new url, @config
+		return @prev
+	end
+
+	def image
+		return @image unless @image.nil?
+		image_url = @doc.xpath @config['image_xpath']
+		url = _make_url @url, image_url.text
+		#pp url
+		url
+		#@prev = Page.new @prev, @config
+		# get image
+	end
+
+	def _make_url current_str, next_str
+		current_url = URI.parse(current_str)
+		case next_str 
+		when /^\// then
+			# semi-absolute
+			next_url = current_url
+			next_url.path = URI.parse(next_str).path
+		when /^https?/ then
+			# absolute
+			next_url = URI.parse(next_str)
+		else
+			# relative
+			next_url = current_url
+			next_url.path += URI.parse(next_str).path
+		end
+		#pp "make_url %s" % next_url.to_s
+		return next_url.to_s
+	end
+end
+
+page = Page.new config_yml['base_url'],config_yml
+page = page.first
+
+while not page.nil? do 
+	puts "PAGE %s" % page.url
+	puts "  image = %s" % page.image.inspect
+	page = page.next
+	sleep config_yml['sleep']
+end
