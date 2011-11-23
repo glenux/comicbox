@@ -7,6 +7,7 @@ require 'rubygems'
 require 'bundler/setup'
 require 'nokogiri'
 require 'open-uri'
+require 'zipruby'
 
 config_path = ARGV.shift
 config_fh = File.open config_path
@@ -15,6 +16,8 @@ pp config_yml
 
 class Page
 	attr_reader :url
+	attr_accessor :prev, :next
+	attr_accessor :index
 
 
 	def initialize url, config
@@ -25,6 +28,7 @@ class Page
 		@next = nil
 		@first = nil
 		@last = nil
+		@index = 0
 
 		@doc = Nokogiri::HTML(open(url))
 	end
@@ -32,7 +36,8 @@ class Page
 	def first
 		return @first unless @first.nil?
 		first_url = @doc.xpath @config['first_xpath']
-		#puts "first %s" % first_url.text
+		pp first_url.inspect
+		puts "first %s" % first_url.text
 		url = _make_url @url, first_url.text
 		@first = Page.new url, @config
 		return @first
@@ -41,7 +46,8 @@ class Page
 	def last
 		return @last unless @last.nil?
 		last_url = @doc.xpath @config['last_xpath']
-		#puts "last %s" % last_url.text
+		pp last_url.inspect
+		puts "last %s" % last_url.text
 		url = _make_url @url, last_url.text
 		@last = Page.new url, @config
 		return @last
@@ -50,18 +56,22 @@ class Page
 	def next
 		return @next unless @next.nil?
 		next_url = @doc.xpath @config['next_xpath']
-		#puts "next %s" % next_url.text
+		pp next_url.inspect
+		puts "next %s" % next_url.text
 		url = _make_url @url, next_url.text
 		@next = Page.new url, @config
+		@next.prev = self
 		return @next
 	end
 
 	def prev
 		return @prev unless @prev.nil?
 		prev_url = @doc.xpath @config['prev_xpath']
-		#puts "prev %s" % prev_url.text
+		pp prev_url.inspect
+		puts "prev %s" % prev_url.text
 		url = _make_url @url, prev_url.text
 		@prev = Page.new url, @config
+		@prev.next = self
 		return @prev
 	end
 
@@ -95,12 +105,25 @@ class Page
 	end
 end
 
+#FileUtils.mkdir_p config_yml['name']
 page = Page.new config_yml['base_url'],config_yml
 page = page.first
 
+ar = Zip::Archive.open( config_yml['name'] + '.zip', Zip::CREATE | Zip::TRUNC)
 while not page.nil? do 
 	puts "PAGE %s" % page.url
 	puts "  image = %s" % page.image.inspect
+	image_format = page.image.gsub(/^.*\.(.*?)$/,'\1')
+	image_path = File.join config_yml['name'], ("page_%04d.%s" % [page.index, image_format])
+	#open( image_path, "wb" ) do |image_fh|
+	#	image_fh.write(  )
+	#end
+	ar.add_buffer( image_path, open( page.image ).read )
+	page_next = page.next
+	break if page_next.url == page.url
+	page_next.index = page.index + 1
 	page = page.next
 	sleep config_yml['sleep']
 end
+ar.close
+
