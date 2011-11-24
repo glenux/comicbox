@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+# FIXME: warning on when a directory contains Thumbs.db
+# FIXME: warning on when a directory or file name contains non-ascii encodings
+# FIXME: warning when extension is cbz but compression algo is not zip
+# FIXME: warning when extension is cbr but compression algo is not rar
+# FIXME: warning when 
+# 
