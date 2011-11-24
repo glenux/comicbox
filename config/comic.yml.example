@@ -1,10 +1,13 @@
 ---
-name: XKCD
-home_url: http://xkcd.com/
-base_url: http://xkcd.com/
-image_xpath: //div[@id="middleContent"]//div[@class="s"]//img/@src
-first_xpath: //div[@class="menuCont"][1]/ul/li[1]/a/@href
-prev_xpath: //div[@class="menuCont"][1]/ul/li[2]/a/@href
-next_xpath: //div[@class="menuCont"][1]/ul/li[4]/a/@href
-last_xpath: //div[@class="menuCont"][1]/ul/li[5]/a/@href
-sleep: 1
+description:
+    name: XKCD
+url:
+    home_url: http://xkcd.com/
+    base_url: http://xkcd.com/
+navigation:
+    image: //div[@id="middleContent"]//div[@class="s"]//img/@src
+    first: //div[@class="menuCont"][1]/ul/li[1]/a/@href
+    prev: //div[@class="menuCont"][1]/ul/li[2]/a/@href
+    next: //div[@class="menuCont"][1]/ul/li[4]/a/@href
+    last: //div[@class="menuCont"][1]/ul/li[5]/a/@href
+    sleep: 0.25
