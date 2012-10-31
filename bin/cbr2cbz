@@ -2,6 +2,9 @@
 
 require 'fileutils'
 
+class UnrarError < RuntimeError ; end
+class ZipError < RuntimeError ; end
+
 where = Dir.pwd
 
 ARGV.each do |arg|
@@ -12,11 +15,21 @@ ARGV.each do |arg|
 
 	name = File.basename(arg).dup
 	name.gsub!(/\.cbr/i,'')
+	if File.exists? name then
+		FileUtils.rm_rf name
+	end
 	FileUtils.mkdir_p name
 	Dir.chdir name
 	system "unrar e \"#{cbr_path}\""
+	if not $?.success? then
+		raise UnrarError
+	end
+
 	Dir.chdir where
 	system "zip -r \"#{cbz_path}\" \"#{name}\""
+	if not $?.success? then
+		raise ZipError
+	end
 	FileUtils.rm_rf name
 end
 
